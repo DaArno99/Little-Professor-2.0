@@ -3,20 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Little Professor – Kopfrechnen</title>
+<title>Little Professor – Kopfrechentest</title>
 <style>
 body {
   font-family: 'Comic Sans MS', sans-serif;
   background: linear-gradient(to bottom, #FFD54F, #FFECB3);
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
+  padding: 20px;
+  min-height: 100vh;
   margin: 0;
 }
 
 .container {
-  max-width: 600px;
+  max-width: 700px;
   width: 100%;
   text-align: center;
 }
@@ -29,14 +29,10 @@ body {
   transition: transform 0.3s;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-}
-
 h1 {
   font-size: 2.5rem;
   color: #FF6F00;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   text-shadow: 2px 2px #FFE082;
 }
 
@@ -46,14 +42,20 @@ h1 {
   flex-wrap: wrap;
   justify-content: center;
   margin-bottom: 20px;
+  transition: all 0.3s;
 }
 
-select {
-  padding: 10px 15px;
-  border-radius: 12px;
-  border: 2px solid #FFB74D;
+.controls.small {
+  transform: scale(0.8);
+  opacity: 0.7;
+}
+
+select, input[type=number] {
+  padding: 8px 12px;
   font-size: 1rem;
-  background: #FFF8E1;
+  border-radius: 10px;
+  border: 2px solid #FFB74D;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -72,50 +74,57 @@ button.primary {
   color: white;
 }
 
-button.primary:hover {
-  background: #FF8F00;
-  transform: scale(1.05);
-}
+button.primary:hover { background: #FF8F00; transform: scale(1.05); }
 
 button.secondary {
   background: #4FC3F7;
   color: white;
 }
 
-button.secondary:hover {
-  background: #29B6F6;
-  transform: scale(1.05);
-}
+button.secondary:hover { background: #29B6F6; transform: scale(1.05); }
 
 .task {
-  font-size: 2.2rem;
+  font-size: 3rem;
   text-align: center;
-  margin: 20px 0;
+  margin: 25px 0;
 }
 
 .feedback {
   text-align: center;
   margin: 10px 0;
   font-weight: bold;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
 }
 
 #exercise input {
-  padding: 8px 12px;
-  font-size: 1.2rem;
-  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 1.5rem;
+  border-radius: 12px;
   border: 2px solid #FFB74D;
   text-align: center;
-  width: 80px;
+  width: 100px;
+}
+
+#timer {
+  font-size: 1.2rem;
+  color: #D32F2F;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+canvas {
+  margin-top: 20px;
+  max-width: 100%;
 }
 </style>
 </head>
 <body>
 <div class="container">
   <div class="card">
-    <h1>🧠 Little Professor 🧠</h1>
-    <p>Wähle die Rechenart und Schwierigkeitsstufe und teste dein Kopfrechnen!</p>
-    <div class="controls">
+    <h1>🧠 Little Professor – Testmodus 🧠</h1>
+    <p>Wähle Rechenart, Stufe und ggf. Timer. Dann starte den Test!</p>
+
+    <div class="controls" id="settings">
       <select id="op">
         <option value="all">Alles</option>
         <option value="+">Addition ➕</option>
@@ -130,68 +139,80 @@ button.secondary:hover {
         <option value="4">Stufe 4</option>
         <option value="5">Stufe 5</option>
       </select>
-    </div>
-    <div class="controls">
-      <button id="startBtn" class="primary">🎯 Start</button>
+      <input type="number" id="timerInput" placeholder="Timer (Sekunden)" min="10" />
+      <button id="startBtn" class="primary">🎯 Start Test</button>
       <button id="restartBtn" class="secondary">🔄 Neu</button>
     </div>
+
+    <div id="timer"></div>
     <div id="exercise"></div>
     <div id="feedback" class="feedback"></div>
+    <canvas id="resultChart"></canvas>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Gleicher Script-Code wie vorher
-const TOTAL = 5;
-let tasks = [], current = 0, correct = 0;
+const TOTAL = 20;
+let tasks = [], current = 0, correct = 0, wrong = 0, timerInterval;
 
 const opEl = document.getElementById('op');
 const levelEl = document.getElementById('level');
 const startBtn = document.getElementById('startBtn');
 const restartBtn = document.getElementById('restartBtn');
+const timerEl = document.getElementById('timer');
 const exerciseEl = document.getElementById('exercise');
 const feedbackEl = document.getElementById('feedback');
+const settingsEl = document.getElementById('settings');
+const timerInput = document.getElementById('timerInput');
+const chartEl = document.getElementById('resultChart');
 
 function randInt(n){ return Math.floor(Math.random()*n); }
 
 function makeTask(level, opChoice){
   const ops = ['+','-','*','/'];
   const op = opChoice==='all'?ops[randInt(ops.length)]:opChoice;
-  let a, b, res;
-
+  let a,b,res;
   const ranges = {
-    '+': [10, 20, 50, 100, 200],
-    '-': [10, 20, 50, 100, 200],
-    '*': [5, 10, 12, 15, 20],
-    '/': [2, 5, 10, 12, 15]
+    '+':[10,20,50,100,200],
+    '-':[10,20,50,100,200],
+    '*':[5,10,12,15,20],
+    '/':[2,5,10,12,15]
   };
   const max = ranges[op][level-1];
-
   switch(op){
-    case '+':
-      a = randInt(max)+1; b = randInt(max)+1; res = a+b; break;
-    case '-':
-      a = randInt(max)+1; b = randInt(a+1); res = a-b; break;
-    case '*':
-      a = randInt(max)+1; b = randInt(max)+1; res = a*b; break;
-    case '/':
-      b = randInt(max-1)+1; let q = randInt(max)+1; a = b*q; res = q; break;
+    case '+': a=randInt(max)+1; b=randInt(max)+1; res=a+b; break;
+    case '-': a=randInt(max)+1; b=randInt(a+1); res=a-b; break;
+    case '*': a=randInt(max)+1; b=randInt(max)+1; res=a*b; break;
+    case '/': b=randInt(max-1)+1; let q=randInt(max)+1; a=b*q; res=q; break;
   }
   return {a,b,op,res};
 }
 
 function startTest(){
-  tasks = []; current = 0; correct = 0;
+  tasks=[]; current=0; correct=0; wrong=0; chartEl.style.display='none';
   for(let i=0;i<TOTAL;i++) tasks.push(makeTask(levelEl.value, opEl.value));
-  startBtn.disabled = true;
+  startBtn.disabled=true; settingsEl.classList.add('small');
   showTask();
+
+  if(timerInput.value){
+    let remaining = parseInt(timerInput.value);
+    timerEl.textContent = `⏱ Zeit: ${remaining}s`;
+    clearInterval(timerInterval);
+    timerInterval = setInterval(()=>{
+      remaining--;
+      timerEl.textContent = `⏱ Zeit: ${remaining}s`;
+      if(remaining<=0){
+        clearInterval(timerInterval);
+        finishTest();
+      }
+    },1000);
+  }
 }
 
 function showTask(){
   if(current >= tasks.length){
-    exerciseEl.innerHTML = `<p>Ende! Richtig: ${correct} / ${TOTAL}</p>`;
-    startBtn.disabled = false;
-    return;
+    finishTest(); return;
   }
   const t = tasks[current];
   exerciseEl.innerHTML = `
@@ -206,21 +227,39 @@ function showTask(){
 function checkAnswer(){
   const t = tasks[current];
   const answer = parseInt(document.getElementById('answer').value,10);
-  if(answer === t.res){
-    correct++;
-    feedbackEl.textContent = "Richtig!";
-    feedbackEl.style.color = "green";
-  } else {
-    feedbackEl.textContent = `Falsch! Richtig: ${t.res}`;
-    feedbackEl.style.color = "red";
-  }
+  if(answer === t.res){ correct++; feedbackEl.textContent="Richtig!"; feedbackEl.style.color="green"; }
+  else{ wrong++; feedbackEl.textContent=`Falsch! Richtig: ${t.res}`; feedbackEl.style.color="red"; }
   current++;
   setTimeout(showTask,500);
 }
 
+function finishTest(){
+  clearInterval(timerInterval);
+  exerciseEl.innerHTML='';
+  feedbackEl.textContent=`Ende! Richtig: ${correct} / ${TOTAL}, Falsch: ${wrong}`;
+  startBtn.disabled=false;
+  settingsEl.classList.remove('small');
+
+  // Balkendiagramm
+  chartEl.style.display='block';
+  new Chart(chartEl, {
+    type: 'bar',
+    data: {
+      labels:['Richtig','Falsch'],
+      datasets:[{
+        label:'Aufgaben',
+        data:[correct,wrong],
+        backgroundColor:['#4CAF50','#F44336']
+      }]
+    },
+    options:{ responsive:true, plugins:{ legend:{ display:false } } }
+  });
+}
+
 startBtn.onclick = startTest;
 restartBtn.onclick = ()=>{
-  exerciseEl.innerHTML=''; feedbackEl.textContent=''; startBtn.disabled=false; current=0; correct=0;
+  exerciseEl.innerHTML=''; feedbackEl.textContent=''; chartEl.style.display='none';
+  startBtn.disabled=false; settingsEl.classList.remove('small'); clearInterval(timerInterval);
 }
 </script>
 </body>
