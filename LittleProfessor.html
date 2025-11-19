@@ -30,6 +30,9 @@ button.secondary { background:#B3E5FC;}
       <select id="level">
         <option value="1">Stufe 1</option>
         <option value="2">Stufe 2</option>
+        <option value="3">Stufe 3</option>
+        <option value="4">Stufe 4</option>
+        <option value="5">Stufe 5</option>
       </select>
       <button id="startBtn" class="primary">Start</button>
       <button id="restartBtn" class="secondary">Neu</button>
@@ -40,8 +43,8 @@ button.secondary { background:#B3E5FC;}
 </div>
 
 <script>
-const TOTAL=5; // für Test kleiner
-let tasks=[], current=0, correct=0;
+const TOTAL = 5;
+let tasks = [], current = 0, correct = 0;
 
 const opEl = document.getElementById('op');
 const levelEl = document.getElementById('level');
@@ -55,27 +58,41 @@ function randInt(n){ return Math.floor(Math.random()*n); }
 function makeTask(level, opChoice){
   const ops = ['+','-','*','/'];
   const op = opChoice==='all'?ops[randInt(ops.length)]:opChoice;
-  let a,b,res;
+  let a, b, res;
+
+  // Zahlenbereiche nach Level
+  const ranges = {
+    '+': [10, 20, 50, 100, 200],
+    '-': [10, 20, 50, 100, 200],
+    '*': [5, 10, 12, 15, 20],
+    '/': [2, 5, 10, 12, 15]
+  };
+  const max = ranges[op][level-1];
+
   switch(op){
-    case '+': a=randInt(20); b=randInt(20); res=a+b; break;
-    case '-': a=randInt(20); b=randInt(a+1); res=a-b; break;
-    case '*': a=randInt(10); b=randInt(10); res=a*b; break;
-    case '/': b=randInt(9)+1; let q=randInt(10)+1; a=b*q; res=q; break;
+    case '+':
+      a = randInt(max)+1; b = randInt(max)+1; res = a+b; break;
+    case '-':
+      a = randInt(max)+1; b = randInt(a+1); res = a-b; break;
+    case '*':
+      a = randInt(max)+1; b = randInt(max)+1; res = a*b; break;
+    case '/':
+      b = randInt(max-1)+1; let q = randInt(max)+1; a = b*q; res = q; break;
   }
   return {a,b,op,res};
 }
 
 function startTest(){
-  tasks=[]; current=0; correct=0;
+  tasks = []; current = 0; correct = 0;
   for(let i=0;i<TOTAL;i++) tasks.push(makeTask(levelEl.value, opEl.value));
-  startBtn.disabled=true;
+  startBtn.disabled = true;
   showTask();
 }
 
 function showTask(){
-  if(current>=tasks.length){
-    exerciseEl.innerHTML=`<p>Ende! Richtig: ${correct} / ${TOTAL}</p>`;
-    startBtn.disabled=false;
+  if(current >= tasks.length){
+    exerciseEl.innerHTML = `<p>Ende! Richtig: ${correct} / ${TOTAL}</p>`;
+    startBtn.disabled = false;
     return;
   }
   const t = tasks[current];
