@@ -1,14 +1,95 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Little Professor – Testmodus</title>
+<style>
+body {
+  font-family: 'Comic Sans MS', sans-serif;
+  background: linear-gradient(to bottom, #FFD54F, #FFECB3);
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  min-height: 100vh;
+  margin: 0;
+}
+
+.container { max-width: 700px; width: 100%; text-align: center; }
+.card { background: #FFF3E0; padding: 30px 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); transition: transform 0.3s; }
+h1 { font-size: 2.5rem; color: #FF6F00; margin-bottom: 10px; text-shadow: 2px 2px #FFE082; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-bottom: 20px; transition: all 0.3s; }
+.controls.small { transform: scale(0.8); opacity: 0.7; }
+select, input[type=number] { padding: 8px 12px; font-size: 1rem; border-radius: 10px; border: 2px solid #FFB74D; text-align: center; cursor: pointer; }
+button { padding: 12px 25px; border: none; border-radius: 15px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s, transform 0.2s; }
+button.primary { background: #FF6F00; color: white; }
+button.primary:hover { background: #FF8F00; transform: scale(1.05); }
+button.secondary { background: #4FC3F7; color: white; }
+button.secondary:hover { background: #29B6F6; transform: scale(1.05); }
+.task { font-size: 3rem; text-align: center; margin: 25px 0; }
+.feedback { text-align: center; margin: 10px 0; font-weight: bold; font-size: 1.3rem; }
+#exercise input { padding: 10px 14px; font-size: 1.5rem; border-radius: 12px; border: 2px solid #FFB74D; text-align: center; width: 100px; }
+#timer { font-size: 1.2rem; color: #D32F2F; font-weight: bold; margin-bottom: 10px; }
+canvas { margin-top: 20px; max-width: 100%; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <h1>🧠 Little Professor – Testmodus 🧠</h1>
+    <p>Wähle Rechenart, Stufe und optional Timer. Dann starte den Test!</p>
+
+    <div class="controls" id="settings">
+      <select id="op">
+        <option value="all">Alles</option>
+        <option value="+">Addition ➕</option>
+        <option value="-">Subtraktion ➖</option>
+        <option value="*">Multiplikation ✖️</option>
+        <option value="/">Division ➗</option>
+      </select>
+      <select id="level">
+        <option value="1">Stufe 1</option>
+        <option value="2">Stufe 2</option>
+        <option value="3">Stufe 3</option>
+        <option value="4">Stufe 4</option>
+        <option value="5">Stufe 5</option>
+      </select>
+      <input type="number" id="timerInput" placeholder="Timer (Sekunden)" min="10" />
+      <button id="startBtn" class="primary">🎯 Start Test</button>
+      <button id="restartBtn" class="secondary">🔄 Neu</button>
+    </div>
+
+    <div id="timer"></div>
+    <div id="exercise"></div>
+    <div id="feedback" class="feedback"></div>
+    <canvas id="resultChart"></canvas>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const TOTAL = 20;
+let tasks = [], current = 0, correct = 0, wrong = 0, timerInterval;
+
+const opEl = document.getElementById('op');
+const levelEl = document.getElementById('level');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const timerEl = document.getElementById('timer');
+const exerciseEl = document.getElementById('exercise');
+const feedbackEl = document.getElementById('feedback');
+const settingsEl = document.getElementById('settings');
+const timerInput = document.getElementById('timerInput');
+const chartEl = document.getElementById('resultChart');
+
+function randInt(n){ return Math.floor(Math.random()*n); }
+
 function makeUniqueTasks(level, opChoice){
   const ops = ['+','-','*','/'];
-  const ranges = {
-    '+':[10,20,50,100,200],
-    '-':[10,20,50,100,200],
-    '*':[5,10,12,15,20],
-    '/':[2,5,10,12,15]
-  };
-
+  const ranges = { '+':[10,20,50,100,200], '-':[10,20,50,100,200], '*':[5,10,12,15,20], '/':[2,5,10,12,15] };
   let uniqueTasks = [];
-  let attempts = 0; // Schutz vor Endlosschleife
+  let attempts = 0;
+
   while(uniqueTasks.length < TOTAL && attempts < 1000){
     attempts++;
     const op = opChoice==='all'?ops[randInt(ops.length)]:opChoice;
@@ -22,12 +103,9 @@ function makeUniqueTasks(level, opChoice){
       case '/': b=randInt(max-1)+1; let q=randInt(max)+1; a=b*q; res=q; break;
     }
 
-    // Prüfen ob Aufgabe schon existiert
     let key = `${a},${op},${b}`;
     let duplicate = uniqueTasks.some(t => `${t.a},${t.op},${t.b}` === key);
-    if(!duplicate){
-      uniqueTasks.push({a,b,op,res});
-    }
+    if(!duplicate){ uniqueTasks.push({a,b,op,res}); }
   }
   return uniqueTasks;
 }
@@ -45,18 +123,13 @@ function startTest(){
     timerInterval = setInterval(()=>{
       remaining--;
       timerEl.textContent = `⏱ Zeit: ${remaining}s`;
-      if(remaining<=0){
-        clearInterval(timerInterval);
-        finishTest();
-      }
+      if(remaining<=0){ clearInterval(timerInterval); finishTest(); }
     },1000);
   }
 }
 
 function showTask(){
-  if(current >= tasks.length){
-    finishTest(); return;
-  }
+  if(current >= tasks.length){ finishTest(); return; }
   const t = tasks[current];
   exerciseEl.innerHTML = `
     <div class="task">${t.a} ${t.op} ${t.b} = </div>
@@ -66,12 +139,42 @@ function showTask(){
   const answerInput = document.getElementById('answer');
   document.getElementById('okBtn').onclick = checkAnswer;
 
-  // Enter-Taste bestätigt die Aufgabe
   answerInput.addEventListener('keydown', function(e){
-    if(e.key === 'Enter'){
-      checkAnswer();
-    }
+    if(e.key === 'Enter'){ checkAnswer(); }
   });
 
   answerInput.focus();
 }
+
+function checkAnswer(){
+  const t = tasks[current];
+  const answer = parseInt(document.getElementById('answer').value,10);
+  if(answer === t.res){ correct++; feedbackEl.textContent="Richtig!"; feedbackEl.style.color="green"; }
+  else{ wrong++; feedbackEl.textContent=`Falsch! Richtig: ${t.res}`; feedbackEl.style.color="red"; }
+  current++;
+  setTimeout(showTask,500);
+}
+
+function finishTest(){
+  clearInterval(timerInterval);
+  exerciseEl.innerHTML='';
+  feedbackEl.textContent=`Ende! Richtig: ${correct} / ${TOTAL}, Falsch: ${wrong}`;
+  startBtn.disabled=false;
+  settingsEl.classList.remove('small');
+
+  chartEl.style.display='block';
+  new Chart(chartEl, {
+    type:'bar',
+    data:{ labels:['Richtig','Falsch'], datasets:[{ label:'Aufgaben', data:[correct,wrong], backgroundColor:['#4CAF50','#F44336'] }] },
+    options:{ responsive:true, plugins:{ legend:{ display:false } } }
+  });
+}
+
+startBtn.onclick = startTest;
+restartBtn.onclick = ()=>{
+  exerciseEl.innerHTML=''; feedbackEl.textContent=''; chartEl.style.display='none';
+  startBtn.disabled=false; settingsEl.classList.remove('small'); clearInterval(timerInterval);
+}
+</script>
+</body>
+</html>
