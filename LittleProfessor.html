@@ -4,112 +4,109 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Little Professor – Kopfrechnen</title>
-<meta name="description" content="Kindgerechte Kopfrechen-App, 20 Aufgaben, Timer, Schwierigkeitsstufen, Fortschrittsanzeige, Feedback, Animationen, DSGVO-konform." />
 <style>
-:root {
-  --bg: #E0F7FA;
-  --card: #FFFFFF;
-  --accent: #FFB74D;
-  --ok: #43A047;
-  --err: #E53935;
-  --text: #0D47A1;
-  --muted: #6b7280;
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 24px; }
-.container { max-width: 900px; width: 100%; }
-header { text-align: center; margin-bottom: 24px; }
-h1 { font-size: 2.2rem; margin-bottom: 6px; color: var(--text); }
-.subtitle { font-size: 1.1rem; color: var(--muted); margin-bottom: 6px; }
-.version { font-size: 0.9rem; color: var(--muted); }
-.card { background: var(--card); border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.08); padding: 24px; transition: transform 0.2s; }
-.card.bounce { animation: bounce 0.5s; }
-@keyframes bounce { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-.controls { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-bottom: 20px; }
-select, button { padding: 16px 24px; border-radius: 12px; border: none; font-size: 1.1rem; cursor: pointer; }
-select { background: #fff; }
-button.primary { background: var(--accent); color: #fff; transition: 0.2s; }
-button.primary:hover { background: #fb8c00; }
-button.secondary { background: #B3E5FC; color: var(--text); }
-.exercise { text-align: center; margin-top: 16px; }
-.taskline { font-size: 1.3rem; margin-bottom: 8px; }
-.task { font-size: 3rem; font-weight: bold; color: var(--text); margin-bottom: 12px; transition: 0.3s; }
-input[type=number] { padding: 16px 20px; border-radius: 12px; border: 2px solid #90CAF9; font-size: 2rem; width: 150px; text-align: center; }
-.feedback { font-size: 1.8rem; font-weight: bold; margin-top: 12px; min-height: 40px; transition: 0.3s; }
-.feedback.ok { color: var(--ok); animation: blinkgreen 0.5s; }
-.feedback.err { color: var(--err); animation: blinkred 0.5s; }
-@keyframes blinkgreen { 0% {opacity:0;} 50% {opacity:1;} 100% {opacity:1;} }
-@keyframes blinkred { 0% {opacity:0;} 50% {opacity:1;} 100% {opacity:1;} }
-.summary { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
-canvas { background: #fff; border-radius: 12px; padding: 8px; }
-.timer-bar { width: 100%; height: 24px; background: #B3E5FC; border-radius: 12px; margin-bottom: 12px; overflow: hidden; }
-.timer-fill { height: 100%; width: 100%; background: var(--accent); transition: width 1s linear; }
-footer { margin-top: 20px; font-size: 0.9rem; color: var(--muted); text-align: center; }
-@media (max-width: 640px) { input[type=number] { width: 100%; } .controls { flex-direction: column; align-items: center; } }
+body { font-family: sans-serif; background:#E0F7FA; display:flex; justify-content:center; padding:20px;}
+.container { max-width:600px; width:100%; }
+.card { background:white; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1);}
+.controls { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:20px;}
+button { padding:10px 20px; border:none; border-radius:8px; cursor:pointer;}
+button.primary { background:#FFB74D; color:white;}
+button.secondary { background:#B3E5FC;}
+.task { font-size:2rem; text-align:center; margin:20px 0;}
+.feedback { text-align:center; margin:10px 0; font-weight:bold;}
 </style>
 </head>
 <body>
-<main class="container">
-<header>
-<h1>Little Professor – Kopfrechnen</h1>
-<div class="subtitle">Wähle Rechenart, Schwierigkeitsstufe & Timer, löse 20 Aufgaben!</div>
-<div class="version">Version 1.3</div>
-</header>
-<section class="card" id="card">
-<div class="controls">
-<select id="op" aria-label="Rechenart wählen">
-<option value="all">Alles ➕➖✖️➗</option>
-<option value="+">Addition (+)</option>
-<option value="-">Subtraktion (-)</option>
-<option value="*">Multiplikation (×)</option>
-<option value="/">Division (÷)</option>
-</select>
-<select id="level" aria-label="Schwierigkeitsstufe wählen">
-<option value="1">Stufe 1</option>
-<option value="2">Stufe 2</option>
-<option value="3">Stufe 3</option>
-<option value="4">Stufe 4</option>
-<option value="5">Stufe 5</option>
-</select>
-<select id="timer" aria-label="Timer wählen">
-<option value="0">Kein Timer</option>
-<option value="120">2 Minuten</option>
-<option value="300">5 Minuten</option>
-<option value="600">10 Minuten</option>
-</select>
-<button id="startBtn" class="primary">Start</button>
-<button id="restartBtn" class="secondary">Neu</button>
+<div class="container">
+  <div class="card">
+    <div class="controls">
+      <select id="op">
+        <option value="all">Alles</option>
+        <option value="+">Addition</option>
+        <option value="-">Subtraktion</option>
+        <option value="*">Multiplikation</option>
+        <option value="/">Division</option>
+      </select>
+      <select id="level">
+        <option value="1">Stufe 1</option>
+        <option value="2">Stufe 2</option>
+      </select>
+      <button id="startBtn" class="primary">Start</button>
+      <button id="restartBtn" class="secondary">Neu</button>
+    </div>
+    <div id="exercise"></div>
+    <div id="feedback" class="feedback"></div>
+  </div>
 </div>
-<div class="timer-bar" style="display:none;"><div id="timerFill" class="timer-fill"></div></div>
-<div id="exercise" class="exercise" aria-live="polite"></div>
-<div id="summaryArea"></div>
-<footer>Alles läuft lokal im Browser – DSGVO-freundlich.</footer>
-</section>
-</main>
-<script>
-const TOTAL=20;
-let tasks=[],current=0,correctCount=0,timerId=null,timeLeft=0;
-const opEl=document.getElementById('op');
-const levelEl=document.getElementById('level');
-const timerEl=document.getElementById('timer');
-const startBtn=document.getElementById('startBtn');
-const restartBtn=document.getElementById('restartBtn');
-const exerciseEl=document.getElementById('exercise');
-const summaryArea=document.getElementById('summaryArea');
-const timerBar=document.querySelector('.timer-bar');
-const timerFill=document.getElementById('timerFill');
-const cardEl=document.getElementById('card');
 
-function randInt(n){return Math.floor(Math.random()*n);}
+<script>
+const TOTAL=5; // für Test kleiner
+let tasks=[], current=0, correct=0;
+
+const opEl = document.getElementById('op');
+const levelEl = document.getElementById('level');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const exerciseEl = document.getElementById('exercise');
+const feedbackEl = document.getElementById('feedback');
+
+function randInt(n){ return Math.floor(Math.random()*n); }
 
 function makeTask(level, opChoice){
-    let maxRange, maxMul;
-    switch(level){
-        case '1': maxRange=20; maxMul=5; break;
-        case '2': maxRange=50; maxMul=10; break;
-        case '3': maxRange=100; maxMul=15; break;
-        case '4': maxRange=500; maxMul=20; break;
-        case '5': maxRange=1000; maxMul=50; break;
-    }
-    const ops=['+','-','*',*]()
+  const ops = ['+','-','*','/'];
+  const op = opChoice==='all'?ops[randInt(ops.length)]:opChoice;
+  let a,b,res;
+  switch(op){
+    case '+': a=randInt(20); b=randInt(20); res=a+b; break;
+    case '-': a=randInt(20); b=randInt(a+1); res=a-b; break;
+    case '*': a=randInt(10); b=randInt(10); res=a*b; break;
+    case '/': b=randInt(9)+1; let q=randInt(10)+1; a=b*q; res=q; break;
+  }
+  return {a,b,op,res};
+}
+
+function startTest(){
+  tasks=[]; current=0; correct=0;
+  for(let i=0;i<TOTAL;i++) tasks.push(makeTask(levelEl.value, opEl.value));
+  startBtn.disabled=true;
+  showTask();
+}
+
+function showTask(){
+  if(current>=tasks.length){
+    exerciseEl.innerHTML=`<p>Ende! Richtig: ${correct} / ${TOTAL}</p>`;
+    startBtn.disabled=false;
+    return;
+  }
+  const t = tasks[current];
+  exerciseEl.innerHTML = `
+    <div class="task">${t.a} ${t.op} ${t.b} = </div>
+    <input type="number" id="answer" />
+    <button id="okBtn">Prüfen</button>
+  `;
+  document.getElementById('okBtn').onclick = checkAnswer;
+  document.getElementById('answer').focus();
+}
+
+function checkAnswer(){
+  const t = tasks[current];
+  const answer = parseInt(document.getElementById('answer').value,10);
+  if(answer === t.res){
+    correct++;
+    feedbackEl.textContent = "Richtig!";
+    feedbackEl.style.color = "green";
+  } else {
+    feedbackEl.textContent = `Falsch! Richtig: ${t.res}`;
+    feedbackEl.style.color = "red";
+  }
+  current++;
+  setTimeout(showTask,500);
+}
+
+startBtn.onclick = startTest;
+restartBtn.onclick = ()=>{
+  exerciseEl.innerHTML=''; feedbackEl.textContent=''; startBtn.disabled=false; current=0; correct=0;
+}
+</script>
+</body>
+</html>
