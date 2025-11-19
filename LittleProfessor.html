@@ -50,4 +50,66 @@ footer { margin-top: 20px; font-size: 0.9rem; color: var(--muted); text-align: c
 </style>
 </head>
 <body>
-<mai
+<main class="container">
+<header>
+<h1>Little Professor – Kopfrechnen</h1>
+<div class="subtitle">Wähle Rechenart, Schwierigkeitsstufe & Timer, löse 20 Aufgaben!</div>
+<div class="version">Version 1.3</div>
+</header>
+<section class="card" id="card">
+<div class="controls">
+<select id="op" aria-label="Rechenart wählen">
+<option value="all">Alles ➕➖✖️➗</option>
+<option value="+">Addition (+)</option>
+<option value="-">Subtraktion (-)</option>
+<option value="*">Multiplikation (×)</option>
+<option value="/">Division (÷)</option>
+</select>
+<select id="level" aria-label="Schwierigkeitsstufe wählen">
+<option value="1">Stufe 1</option>
+<option value="2">Stufe 2</option>
+<option value="3">Stufe 3</option>
+<option value="4">Stufe 4</option>
+<option value="5">Stufe 5</option>
+</select>
+<select id="timer" aria-label="Timer wählen">
+<option value="0">Kein Timer</option>
+<option value="120">2 Minuten</option>
+<option value="300">5 Minuten</option>
+<option value="600">10 Minuten</option>
+</select>
+<button id="startBtn" class="primary">Start</button>
+<button id="restartBtn" class="secondary">Neu</button>
+</div>
+<div class="timer-bar" style="display:none;"><div id="timerFill" class="timer-fill"></div></div>
+<div id="exercise" class="exercise" aria-live="polite"></div>
+<div id="summaryArea"></div>
+<footer>Alles läuft lokal im Browser – DSGVO-freundlich.</footer>
+</section>
+</main>
+<script>
+const TOTAL=20;
+let tasks=[],current=0,correctCount=0,timerId=null,timeLeft=0;
+const opEl=document.getElementById('op');
+const levelEl=document.getElementById('level');
+const timerEl=document.getElementById('timer');
+const startBtn=document.getElementById('startBtn');
+const restartBtn=document.getElementById('restartBtn');
+const exerciseEl=document.getElementById('exercise');
+const summaryArea=document.getElementById('summaryArea');
+const timerBar=document.querySelector('.timer-bar');
+const timerFill=document.getElementById('timerFill');
+const cardEl=document.getElementById('card');
+
+function randInt(n){return Math.floor(Math.random()*n);}
+
+function makeTask(level, opChoice){
+    let maxRange, maxMul;
+    switch(level){
+        case '1': maxRange=20; maxMul=5; break;
+        case '2': maxRange=50; maxMul=10; break;
+        case '3': maxRange=100; maxMul=15; break;
+        case '4': maxRange=500; maxMul=20; break;
+        case '5': maxRange=1000; maxMul=50; break;
+    }
+    const ops=['+','-','*',*]()
